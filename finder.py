@@ -61,7 +61,7 @@ for entry in log_entries:
             print(f" [+] Rule Match:  {action}")
             print(f" [+] Message:  {message}")
             print(f" [+] RuleId {ruleId}")
-            print(f" [+] RuleId {tid}")
+            print(f" [+] TransactionId {tid}")
             continue
         else:
             continue

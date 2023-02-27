@@ -4,7 +4,12 @@ import time
 from termcolor import colored
 import re
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import numpy as np
+import tqdm
+
 rootdir = os.getcwd()
+
 
 banner ="""
 
@@ -32,20 +37,17 @@ temp_file = "temp.txt"
 db_file = "db.json"
 
 if os.path.exists(temp_file):
-    answer = input(f"{temp_file} already exists. Do you want to delete it? (y/n)")
-    if answer.lower() == "y":
         os.remove(temp_file)
-        print(f"{temp_file} deleted.")
-    else:
-        print(f"{temp_file} not deleted.")
+        print(colored(f"[+] {temp_file} deleted.", 'red'))
+else:
+    print(f"{temp_file} does not exist.")
 
 if os.path.exists(db_file):
-    answer = input(f"{db_file} already exists. Do you want to delete it? (y/n)")
-    if answer.lower() == "y":
         os.remove(db_file)
-        print(f"{db_file} deleted.")
-    else:
-        print(f"{db_file} not deleted.")
+        print(colored(f"[+] {db_file} deleted.", 'red'))
+else:
+    print(f"{db_file} does not exist.")
+
 
 
 
@@ -65,17 +67,24 @@ print(colored("[+] Creating DB for analysis", 'green'))
 blobs = open(r"temp.txt", 'r')
 
 jsonfiles= blobs.readlines();
+
+pbar = tqdm.tqdm(total=len('temp.txt'), desc=colored("[+] Processing Files", 'green'))
+
 for line in jsonfiles:
     files=(line).rstrip()
-    print(colored(f"[+]Processing File: {files}",'blue'))
+    #print(colored(f"[+] Processing File:\t {files}",'blue'))
+    
     time.sleep(1)
     filelist=open(files,'r')
     line_list = filelist.readlines();
     for line in line_list:
         f= open('db.json', 'a')
         f.write(line)
+        pbar.update()
+        pbar.close()
         f.close()
     filelist.close()
+    
     
 
 # analysis 
@@ -121,23 +130,32 @@ for entry in log_entries:
         elif action == "Allowed":
             allowed_count += 1
        
+# print all unique hostnames
+for entry in log_entries:
+    if entry.strip():
+        log_json = json.loads(entry)
+        if 'hostname' not in log_json["properties"]:
+            ignored_count +=1
+            continue
+        else:
+            hostname = log_json["properties"]["hostname"]
+            f = open("hostnames.txt", 'a')
+            f.write(hostname + "\r\n")  
+            f.close()
+    
 
+date = time.strftime("%d/%m/%Y")
 # Print the statistics
 # print(colored("[+] text", 'green'))
-print(colored("=======================================", 'white'))
-print(colored(("Total Blocked requests:", blocked_count), 'red'))
-print(colored(("Total Matched requests:", matched_count), 'yellow'))
-print(colored(("Total Detected requests:", detected_count), 'blue'))
-print(colored(("Toal Allowed requests:", allowed_count), 'green'))
-#print(colored(("Toal Ignored requests", ignored_count), 'green')) # not sure why I added this.
-print(colored("=======================================", 'white'))
 
-
-# Create the bar chart with browser stuffs
-
-fig = go.Figure(data=[go.Bar(x=["Blocked (" + str(blocked_count) + ")", "Matched (" + str(matched_count) + ")","Detected (" + str(detected_count) + ")", "Allowed (" + str(allowed_count) + ")" ], y=[blocked_count, matched_count, detected_count, allowed_count])])
-# Show the chart
-fig.show()
-
-
-
+print(colored(f"[+] Analysis Date:\t\t {date}", 'green'))
+unique_hostnames = np.unique(np.loadtxt("hostnames.txt", dtype=str))
+print(colored("[*] Hostnames: ", 'green'))
+for hostname in unique_hostnames:
+    print(colored(f"[+] HostName:\t\t\t {hostname}", 'blue'))
+print(colored("[*] Brief Summary", 'green'))
+print(colored(f"[+] Total Blocked requests:\t {blocked_count}", 'red'))
+print(colored(f"[+] Total Matched requests:\t {matched_count}", 'yellow'))
+print(colored(f"[+] Total Detected requests:\t {detected_count}", 'blue'))
+print(colored(f"[+] Toal Allowed requests:\t {allowed_count}", 'green'))
+print(colored(f"[+] Toal Ignored requests:\t {ignored_count}", 'green')) # not sure why I added this.

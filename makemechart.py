@@ -27,6 +27,8 @@ dumb script by : @anir0y
 
 print(banner)
 
+hostname = input("Enter the Hostname: ")
+
 # analysis 
 # File path of the Azure WAF log file
 log_file = "db.json"
@@ -46,6 +48,7 @@ detected_count = 0
 allowed_count = 0
 ignored_count = 0
 
+
 # Iterate through each log entry
 for entry in log_entries:
     # Check if the entry is not empty
@@ -54,7 +57,9 @@ for entry in log_entries:
         log_json = json.loads(entry)
 
         # Check if the 'action' key exists in the log entry
-        if 'action' not in log_json["properties"]:
+
+        if hostname not in log_json["properties"]["hostname"]: 
+
             ignored_count +=1
             continue
         else:
@@ -73,32 +78,26 @@ for entry in log_entries:
 
 # Print the statistics
 # print(colored("[+] text", 'green'))
-print(colored("=======================================", 'white'))
-print(colored(("Total Blocked requests:", blocked_count), 'red'))
-print(colored(("Total Matched requests:", matched_count), 'yellow'))
-print(colored(("Total Detected requests:", detected_count), 'blue'))
-print(colored(("Toal Allowed requests:", allowed_count), 'green'))
-#print(colored(("Toal Ignored requests", ignored_count), 'green')) # not sure why I added this.
-print(colored("=======================================", 'white'))
-print("[+] analysis done")
 
-# Boring Graph! no able to figure out how to print the occourance so used diffrent lib
-#actions = ["Blocked", "Matched", "Detected", "Allowed"]
-#counts = [blocked_count, matched_count, detected_count, allowed_count]
-#plt.bar(actions, counts)
-#plt.xlabel("Actions")
-#plt.ylabel("Counts")
-#plt.title("Azure WAF Log Analysis")
-#plt.show()
+print(colored("[*] Brief Summary", 'green'))
+print(colored(f"[+] Total Blocked requests:\t {blocked_count}", 'red'))
+print(colored(f"[+] Total Matched requests:\t {matched_count}", 'yellow'))
+print(colored(f"[+] Total Detected requests:\t {detected_count}", 'blue'))
+print(colored(f"[+] Toal Allowed requests:\t {allowed_count}", 'green'))
+print(colored(f"[+] Toal Ignored requests:\t {ignored_count}", 'green')) # not sure why I added this.
 
+#  Graph
 
-
-
-# Create the bar chart with browser stuffs
-
-fig = go.Figure(data=[go.Bar(x=["Blocked (" + str(blocked_count) + ")", "Matched (" + str(matched_count) + ")","Detected (" + str(detected_count) + ")", "Allowed (" + str(allowed_count) + ")" ], y=[blocked_count, matched_count, detected_count, allowed_count])])
-# Show the chart
-fig.show()
+actions = ["Blocked (" + str(blocked_count) + ")", "Matched (" + str(matched_count) + ")","Detected (" + str(detected_count) + ")", "Allowed (" + str(allowed_count) + ")", "Ignored (" + str(ignored_count) + ")" ]
+counts = [blocked_count, matched_count, detected_count, allowed_count, ignored_count]
+plt.bar(actions, counts)
+plt.xlabel("Actions")
+plt.ylabel("Counts")
+plt.title(" WAF Log Analysis for: " + hostname)
+plt.show()
+time.sleep(0)
+# close the plt
+plt.close
 
 
 
